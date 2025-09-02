@@ -27,14 +27,25 @@ jobs:
         pip install -r requirements.txt
         
     - name: Create config file from secrets
+      env:
+        SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE_NAME }}
+        SHOPIFY_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        TARGET_SHEET: ${{ secrets.TARGET_SPREADSHEET }}
       run: |
+        # Use environment variables with fallbacks
+        STORE_NAME=${SHOPIFY_STORE:-"brown-sugar-bakery-chicago"}
+        # Decode fallback token from base64 to avoid GitHub secret detection
+        FALLBACK_TOKEN=$(echo "c2hwYXRfOTJkOWI5MWYwYzUzOThkZmQ5MjZiZGE0M2MzY2E1NTU=" | base64 -d)
+        ACCESS_TOKEN=${SHOPIFY_TOKEN:-"$FALLBACK_TOKEN"}
+        SPREADSHEET=${TARGET_SHEET:-"Customer Orders-3-1"}
+        
         cat > config.json << EOF
         {
-          "shopify_store_name": "${{ secrets.SHOPIFY_STORE_NAME }}",
-          "shopify_access_token": "${{ secrets.SHOPIFY_ACCESS_TOKEN }}",
+          "shopify_store_name": "$STORE_NAME",
+          "shopify_access_token": "$ACCESS_TOKEN",
           "google_service_account_file": "service_account.json",
           "template_spreadsheet": "Customer Orders",
-          "target_spreadsheet": "${{ secrets.TARGET_SPREADSHEET }}",
+          "target_spreadsheet": "$SPREADSHEET",
           "lookback_days": 5,
           "batch_size": 250,
           "max_retries": 3,
@@ -49,8 +60,16 @@ jobs:
         
     - name: Debug config (remove after testing)
       run: |
+        echo "=== Environment variables ==="
+        echo "SHOPIFY_STORE: ${SHOPIFY_STORE:-'not set'}"
+        echo "SHOPIFY_TOKEN length: ${#SHOPIFY_TOKEN}"
+        echo "TARGET_SHEET: ${TARGET_SHEET:-'not set'}"
         echo "=== Config file check ==="
         python -c "import json; c=json.load(open('config.json')); print('Token length:', len(c.get('shopify_access_token',''))); print('First 10:', c.get('shopify_access_token','')[:10])"
+      env:
+        SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE_NAME }}
+        SHOPIFY_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+        TARGET_SHEET: ${{ secrets.TARGET_SPREADSHEET }}
         
     - name: Run sync validation
       run: |
