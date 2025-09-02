@@ -55,21 +55,36 @@ jobs:
         EOF
         
     - name: Create Google service account file
-      run: |
-        echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > service_account.json
-        
-    - name: Debug config (remove after testing)
-      run: |
-        echo "=== Environment variables ==="
-        echo "SHOPIFY_STORE: ${SHOPIFY_STORE:-'not set'}"
-        echo "SHOPIFY_TOKEN length: ${#SHOPIFY_TOKEN}"
-        echo "TARGET_SHEET: ${TARGET_SHEET:-'not set'}"
-        echo "=== Config file check ==="
-        python -c "import json; c=json.load(open('config.json')); print('Token length:', len(c.get('shopify_access_token',''))); print('First 10:', c.get('shopify_access_token','')[:10])"
       env:
-        SHOPIFY_STORE: ${{ secrets.SHOPIFY_STORE_NAME }}
-        SHOPIFY_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
-        TARGET_SHEET: ${{ secrets.TARGET_SPREADSHEET }}
+        GOOGLE_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+      run: |
+        # Try to use GitHub secret first, fallback to local file
+        if [ -z "$GOOGLE_JSON" ]; then
+          echo "Using fallback service account (GitHub secret is empty)"
+          cp long-canto-360620-dcaf3c6f9ef6.json service_account.json 2>/dev/null || echo "Fallback file not found, will use secret"
+        fi
+        
+        # If still no file, create from GitHub secret (even if it might be problematic)
+        if [ ! -f service_account.json ]; then
+          echo "Creating service account file from GitHub secret"
+          echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > service_account.json
+        fi
+        
+        # Validate the file
+        if [ -f service_account.json ] && [ -s service_account.json ]; then
+          echo "✓ Service account file exists and is not empty"
+          echo "File size: $(wc -c < service_account.json) bytes"
+        else
+          echo "✗ Service account file is missing or empty"
+          exit 1
+        fi
+        
+    - name: Debug config
+      run: |
+        echo "=== Config validation ==="
+        python -c "import json; c=json.load(open('config.json')); print('✓ Config JSON is valid'); print('Token length:', len(c.get('shopify_access_token',''))); print('Store:', c.get('shopify_store_name')); print('Target:', c.get('target_spreadsheet'))"
+        echo "=== Service account validation ==="  
+        python -c "import json; json.load(open('service_account.json')); print('✓ Service account JSON is valid')" || echo "✗ Service account JSON is invalid"
         
     - name: Run sync validation
       run: |
