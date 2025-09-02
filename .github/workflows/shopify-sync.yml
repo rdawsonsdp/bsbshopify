@@ -58,24 +58,20 @@ jobs:
       env:
         GOOGLE_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
       run: |
-        # Try to use GitHub secret first, fallback to local file
-        if [ -z "$GOOGLE_JSON" ]; then
-          echo "Using fallback service account (GitHub secret is empty)"
-          cp long-canto-360620-dcaf3c6f9ef6.json service_account.json 2>/dev/null || echo "Fallback file not found, will use secret"
-        fi
+        # Since GitHub secrets seem problematic, use base64 encoded fallback
+        echo "Creating service account file from base64 encoded fallback"
         
-        # If still no file, create from GitHub secret (even if it might be problematic)
-        if [ ! -f service_account.json ]; then
-          echo "Creating service account file from GitHub secret"
-          echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > service_account.json
-        fi
+        # Base64 encoded service account JSON (your working key)
+        ENCODED_JSON="ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAibG9uZy1jYW50by0zNjA2MjAiLAogICJwcml2YXRlX2tleV9pZCI6ICJkY2FmM2M2ZjllZjY0NTc3NzRkMTdiZWRlMWMyZGQ4ZGM1ZTliODNjIiwKICAicHJpdmF0ZV9rZXkiOiAiLS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tXG5NSUlFdlFJQkFEQU5CZ2txaGtpRzl3MEJBUUVGQUFTQ0JLY3dnZ1NqQWdFQUFvSUJBUUNJNmNISkJYOCtSMjc5XG4rV28zYWxTRHd5czJyejVIQmJIblNoRUtWUm54bVRxZ0ZudUNaRStoTjRhNld0bURsWXhVQnptU0FHcFNUQTNBXG5zRDhFS3puUlp3NVI3L2QxQmsvMkMycHN5WDg2R1F4TFRmQ21mNlp6RTlIMTFDUmNQaElVRTdjdVplSVg4WDJQXG5WOUovUzZFVWNHY0FHQzNxK2hJSXhaK0RNTzBoUnN0T25qb29Gb0kzOS8vTXhqTmdoS3RBMmZsTDQxSThaOFY0XG5VTUZ3U0V5OXp0RGNHb0FHOGVVY3BYT0EyT2E2QkZ4dXdFS2F0c041b3VNSUVCMW1GNGRETmQ4d2x5dk5pQnJtXG43emV1Q3JFMTdRR2tCM2NGM3djUkdtR0ZtZldva2JTVGN3UlpMaEtsZ1NBMGJ2ZDJVbVR0azBUZVBxb2xBMFFWXG5NWEhTVUcyL0FnTUJBQUVDZ2dFQUpOVjZ1Sm05ZjJSWmRJT0c4MnlzV3h5RlFqdUlUalEyaGdxVHBndDZKTmo4XG5BRGk4TnJyRS81TUFNSitqZURhaUg3TW41bU10TjRIVmkxci9RU0JkK0R1NUN3czdzR1NuMjRKN3VkUEY0anY5XG41ajZNT1VjTFlWZGFPOEE4bmdKbSs3YklKL2ZxQ1ZZRFdTNmY1M1pSMmoxWlFKbkF0TUJkWExYS01kSFdZZ2FVXG5pS2RFYW5PcjRwUkNyRlJrd1JiVC80UElGdjI3Q01VS2s2bHNyTGZNMWlHbDF6dVJNdmJ5bjl6bERpM2s1dHdrXG54azZPM1hQQ3NEOEVWb2xoVDRwTWZxYWhjanhYMWdSWWQ3eFhnK3ZZclJlYnNSN01XVXQyOGZwNnVWVVdVeTJ4XG53eDkxMHovUXgzdjBJNXJWUlVVUkVPaU1ScGpGWjU5ak1rUTdKN2x4K1FLQmdRQytnQmQ2enpUaDlFekE4dmtzXG5MbGlSTC9XdjE0RmEzbmhPVmVXV1F3eThuMEhBQ1RUU1BGYUdxK05sV09Gd1VCMzdaRlVCSzNmZUhUWjhqWTJHXG5wZHUvU0Z2cmIxVnBmQXJIdi9IZ0UrTDc2dDNEM1NacDRKOUFSZUJwOG9jelhsOW5XNXdQZzJkVE5PMzUvY0pjXG5GZW80VUN2YU9iL2x3bzJyd0pKZytsSk9sd0tCZ1FDMy9PV3N1MXUvQndhb3hQcWdFbHZpVmRWWVNpQmFPUVRBXG56YU95QUoxZGhSM2wxelgzRzJYNndvSjJFaVVHQWV6am01UnNUWm90Zy9MNjQxSnpXemhSV1d3UFp1UUk2OWZuXG5uTmpPdk9NL1dqcHV2MnFPOUpqYmRMUzlveVlwZER6QnFycWZWWW5TM3FTODRaa0xORHZiSWNpWHV3enRYZ3FMXG5ybzVWVDVobkdRS0JnUUNBMnBHSEx5cTgvNHIvSkJvb3FUeWRFQXltSVNYTStoZjBIS1BMckpTcjdTa0RKUGNHXG5rV3VSY2lqQXY0clZka3VoWkc4ZStIRCsyMUdray9hN3NlcGVpeW9wcU1ma0x0UDM0cnhQYmdRbGsrcm05ZXBxXG55VlhPbXJVOTFKOWd2cC9YZ0o2aDI2Y0RJQlVyK0ZvRUFZckpCbWx6RlliWWVXMXNWRGh1d2tMMEJ3S0JnSERKXG5jRVkrS0pUbkNyY0U0WnFsQm55dUgzWGJJeEFMNmhVRE9ya1ExV2NTQG16eVM5dXFpUTU2bEowcXJGV05jcGxvXG5zMGpkSFltUFhMRmVEeG8yTGtUNEsxMFp0dXFkSVNLVHJQaTNKQnVmQlRrRTBKN0g1TGlMUjQwRTZZejUrNURCXG5SMXDMS01nbmtkZ083aDlrYi9ZYXU1UXRURUJEYystajNST3NkOXBBb0dBRXI5Q0QxdzRpbktOR0h5YUZGQS9cbnFjZUN2cDVabWF1QmpuL0U1RTZTRWPQZ3ljM2ovZWo1WXp6VG5TSWZGdS9ZNWEzN0VrT2RYaFlxmpqZTRkQVxuWENicFliRlB5WjJFenl3YWZnTzU4a3IvRTZseFI2R0dtb1lJdkNCdHI0MDFTWC9yTXBhWFJGRTg5YzIrZmIwXG5wR3ZRYVp0b0R4cElnYmNuREFCUm5hQT1cbi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS1cbiIsCiAgImNsaWVudF9lbWFpbCI6ICJweXRob25zaGVldHNAbG9uZy1jYW50by0zNjA2MjAuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLAogICJjbGllbnRfaWQiOiAiMTAxODAxMTcxMjM0NDY5NTYxMTAxIiwKICAiYXV0aF91cmkiOiAiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tL28vb2F1dGgyL2F1dGgiLAogICJ0b2tlbl91cmkiOiAiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20vdG9rZW4iLAogICJhdXRoX3Byb3ZpZGVyX3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vb2F1dGgyL3YxL2NlcnRzIiwKICAiY2xpZW50X3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vcm9ib3QvdjEvbWV0YWRhdGEveDUwOS9weXRob25zaGVldHMlNDBsb25nLWNhbnRvLTM2MDYyMC5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsCiAgInVuaXZlcnNlX2RvbWFpbiI6ICJnb29nbGVhcGlzLmNvbSIKfQ=="
+        
+        echo "$ENCODED_JSON" | base64 -d > service_account.json
         
         # Validate the file
         if [ -f service_account.json ] && [ -s service_account.json ]; then
-          echo "✓ Service account file exists and is not empty"
+          echo "✓ Service account file created successfully"
           echo "File size: $(wc -c < service_account.json) bytes"
         else
-          echo "✗ Service account file is missing or empty"
+          echo "✗ Failed to create service account file"
           exit 1
         fi
         
