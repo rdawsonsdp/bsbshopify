@@ -43,9 +43,25 @@ jobs:
         }
         EOF
         
+    - name: Debug config file (remove after testing)
+      run: |
+        echo "=== Config file contents (masking sensitive data) ==="
+        echo "Store name: $(grep shopify_store_name config.json | cut -d'"' -f4)"
+        echo "Has access token: $(grep shopify_access_token config.json | wc -l)"
+        echo "Target sheet: $(grep target_spreadsheet config.json | cut -d'"' -f4)"
+        echo "Service account file: $(grep google_service_account_file config.json | cut -d'"' -f4)"
+        
     - name: Create Google service account file
       run: |
         echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > service_account.json
+        
+    - name: Check secrets are available
+      run: |
+        echo "Checking GitHub Secrets availability..."
+        echo "SHOPIFY_STORE_NAME: ${{ secrets.SHOPIFY_STORE_NAME != '' }}"
+        echo "SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN != '' }}"
+        echo "TARGET_SPREADSHEET: ${{ secrets.TARGET_SPREADSHEET != '' }}"
+        echo "GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON != '' }}"
         
     - name: Run sync validation
       run: |
