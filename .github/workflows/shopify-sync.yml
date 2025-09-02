@@ -45,11 +45,11 @@ jobs:
         
     - name: Debug config file (remove after testing)
       run: |
-        echo "=== Config file contents (masking sensitive data) ==="
-        echo "Store name: $(grep shopify_store_name config.json | cut -d'"' -f4)"
-        echo "Has access token: $(grep shopify_access_token config.json | wc -l)"
-        echo "Target sheet: $(grep target_spreadsheet config.json | cut -d'"' -f4)"
-        echo "Service account file: $(grep google_service_account_file config.json | cut -d'"' -f4)"
+        echo "=== Raw config.json file ==="
+        cat config.json
+        echo ""
+        echo "=== Token validation ==="
+        python -c "import json; config=json.load(open('config.json')); token=config.get('shopify_access_token',''); print('Token length:', len(token)); print('Starts with shpat_:', token.startswith('shpat_')); print('First 10 chars:', token[:10])"
         
     - name: Create Google service account file
       run: |
@@ -62,6 +62,32 @@ jobs:
         echo "SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN != '' }}"
         echo "TARGET_SPREADSHEET: ${{ secrets.TARGET_SPREADSHEET != '' }}"
         echo "GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON != '' }}"
+        
+    - name: Verify config file content
+      run: |
+        echo "=== Full config.json content (JSON structure check) ==="
+        cat config.json
+        echo ""
+        echo "=== Python JSON validation ==="
+        python -c "
+import json
+try:
+    with open('config.json', 'r') as f:
+        config = json.load(f)
+    print('✓ JSON is valid')
+    print(f'✓ Keys found: {list(config.keys())}')
+    
+    # Check each required field
+    required = ['shopify_store_name', 'shopify_access_token', 'target_spreadsheet']
+    for key in required:
+        if key in config and config[key]:
+            print(f'✓ {key}: present and not empty')
+        else:
+            print(f'✗ {key}: missing or empty')
+            print(f'  Value: \"{config.get(key, \"NOT_FOUND\")}\"')
+except Exception as e:
+    print(f'✗ JSON parsing error: {e}')
+"
         
     - name: Run sync validation
       run: |
