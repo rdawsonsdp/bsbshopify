@@ -1,0 +1,13 @@
+{
+  "shopify_store_name": "brown-sugar-pre-orders",
+  "shopify_access_token": "YOUR_SHOPIFY_ACCESS_TOKEN_HERE",
+  "google_service_account_file": "/path/to/your/google-service-account-key.json",
+  "template_spreadsheet": "Customer Orders",
+  "target_spreadsheet": "Customer Orders-3-1",
+  "lookback_days": 30,
+  "batch_size": 250,
+  "max_retries": 3,
+  "retry_delay": 5,
+  "db_path": "shopify_sync.db",
+  "log_level": "INFO"
+}

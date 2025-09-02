@@ -1,0 +1,10 @@
+gspread==5.11.3
+gspread-pandas==3.2.3
+requests==2.31.0
+pandas==2.1.1
+numpy==1.25.2
+google-auth==2.23.0
+google-auth-oauthlib==1.1.0
+google-auth-httplib2==0.1.1
+python-dateutil==2.8.2
+python-dotenv==1.0.0
